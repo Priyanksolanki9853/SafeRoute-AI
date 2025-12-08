@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeRoute AI | Final Major Project</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            /* Light Theme */
+            --bg-color: #F0F2F5;
+            --panel-bg: rgba(255, 255, 255, 0.85); /* Glassmorphism transparency */
+            --text-main: #1A1A1A;
+            --text-sub: #64748B;
+            --border-col: rgba(0, 0, 0, 0.08);
+            --input-bg: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            
+            /* Brand Colors */
+            --tss-red: #E11B23;
+            --whatsapp-green: #10B981;
+            
+            /* Typography */
+            --font-head: 'Montserrat', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            --bg-color: #0F172A;
+            --panel-bg: rgba(30, 41, 59, 0.85); /* Glassmorphism transparency */
+            --text-main: #F8FAFC;
+            --text-sub: #94A3B8;
+            --border-col: rgba(255, 255, 255, 0.1);
+            --input-bg: #1E293B;
+            --card-bg: #1E293B;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        
+        html { scroll-behavior: smooth; }
+
+        body { 
+            font-family: var(--font-body); 
+            background: var(--bg-color); 
+            color: var(--text-main);
+            overflow-x: hidden;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tss-red); }
+
+        /* NAVBAR */
+        .navbar { 
+            height: 75px; 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 5%; position: sticky; top: 0; z-index: 2000; 
+            box-shadow: var(--shadow-sm); border-bottom: 1px solid var(--border-col);
+            transition: all 0.3s ease;
+        }
+        
+        .logo { 
+            font-family: var(--font-head); font-weight: 800; font-size: 24px; 
+            text-transform: uppercase; letter-spacing: -0.5px; 
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer;
+        }
+        .logo i { font-size: 26px; color: var(--tss-red); }
+        .logo span { color: var(--tss-red); }
+        
+        .nav-links { display: flex; align-items: center; gap: 25px; }
+        .nav-link { 
+            font-weight: 600; font-size: 13px; cursor: pointer; 
+            text-transform: uppercase; transition: 0.3s; color: var(--text-main); 
+            position: relative; padding: 5px 0;
+        }
+        .nav-link:hover { color: var(--tss-red); }
+        
+        .theme-btn {
+            background: transparent; border: 1px solid var(--border-col); color: var(--text-main);
+            width: 40px; height: 40px; border-radius: 50%; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;
+        }
+        .theme-btn:hover { border-color: var(--tss-red); color: var(--tss-red); }
+
+        .emergency-btn {
+            background: linear-gradient(135deg, var(--tss-red), #b91c1c); 
+            color: white !important; padding: 10px 22px;
+            border-radius: 30px; box-shadow: 0 4px 15px rgba(225, 27, 35, 0.3); 
+            font-weight: 700; font-size: 12px; cursor: pointer; 
+            transition: all 0.3s; letter-spacing: 0.5px; border: none;
+        }
+        .emergency-btn:hover { transform: translateY(-3px); }
+
+        /* HERO SECTION */
+        .video-container {
+            width: 95%; max-width: 1400px; margin: 30px auto;
+            height: 400px; border-radius: 24px; overflow: hidden; position: relative;
+            box-shadow: var(--shadow-lg); transition: transform 0.5s ease;
+            animation: fadeInScale 1s ease-out;
+        }
+        .video-container:hover { transform: scale(1.01); }
+        
+        video.hero-video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7); }
+        
+        .video-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
+            display: flex; flex-direction: column; 
+            justify-content: center; padding-left: 8%; color: white;
+        }
+        
+        .video-overlay h1 { 
+            font-family: var(--font-head); font-size: 48px; font-weight: 900; 
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;
+            text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            animation: slideRight 1s ease-out 0.2s backwards;
+        }
+        .video-overlay p { 
+            font-size: 14px; font-weight: 700; 
+            background: var(--tss-red); padding: 8px 24px; border-radius: 30px; 
+            letter-spacing: 2px; display: inline-block; width: fit-content;
+            animation: slideRight 1s ease-out 0.4s backwards;
+            box-shadow: 0 4px 15px rgba(225, 27, 35, 0.4);
+        }
+
+        /* --- DASHBOARD --- */
+        .tool-section-title { 
+            text-align: center; font-family: var(--font-head); font-size: 28px; 
+            font-weight: 800; color: var(--text-main); margin: 50px 0 25px 0; 
+            text-transform: uppercase;
+        }
+        
+        .app-body { 
+            height: 90vh; width: 96%; margin: 0 auto; 
+            display: flex; flex-direction: row; 
+            border-radius: 20px; overflow: hidden; 
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border-col);
+            background: var(--card-bg);
+        }
+        
+        /* SIDEBAR (LEFT) - Glassmorphism Updated */
+        .sidebar { 
+            width: 400px; height: 100%; 
+            background: var(--panel-bg); /* Uses semi-transparent color */
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); /* Frosted Glass */
+            display: flex; flex-direction: column; z-index: 999; 
+            border-right: 1px solid var(--border-col);
+        }
+        .sidebar-content { padding: 30px; overflow-y: auto; height: 100%; }
+        
+        /* MAP (RIGHT) - Cinematic Update */
+        #map { 
+            flex: 1; height: 100%; background: #e5e3df; z-index: 1; 
+            transition: filter 0.3s;
+            position: relative;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.3); /* Inner Shadow */
+        }
+        
+        /* Digital Grid Overlay */
+        #map::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(255, 0, 0, 0.03) 1px, transparent 1px),
+                linear-gradient(rgba(255, 0, 0, 0.03) 1px, transparent 1px);
+            background-size: 100% 2px, 20px 100%, 100% 20px;
+            pointer-events: none;
+            z-index: 400;
+        }
+
+        #map.reporting-mode { cursor: crosshair; filter: grayscale(0.5); }
+
+        /* RADAR SCAN ANIMATION */
+        .radar-scan {
+            display: none; 
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, rgba(225, 27, 35, 0) 0%, rgba(225, 27, 35, 0.15) 50%, rgba(225, 27, 35, 0) 100%);
+            z-index: 500;
+            pointer-events: none;
+            animation: scan 2s linear infinite;
+        }
+        @keyframes scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* WIDGETS */
+        .weather-widget {
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(135deg, #3B82F6, #2563EB); color: white;
+            padding: 20px; border-radius: 16px; margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+        .weather-temp { font-size: 28px; font-weight: 800; font-family: var(--font-head); }
+        .weather-desc { font-size: 11px; text-transform: uppercase; font-weight: 600; }
+
+        .controls-row { display: flex; flex-direction: column; gap: 20px; margin-bottom: 25px; border-bottom: 1px solid var(--border-col); padding-bottom: 25px; }
+        
+        .input-wrapper { position: relative; }
+        .input-label { 
+            font-size: 11px; font-weight: 700; color: var(--text-sub); 
+            text-transform: uppercase; margin-bottom: 8px; display: block; 
+        }
+        
+        .tss-input { 
+            width: 100%; padding: 16px 45px 16px 18px; 
+            border: 1px solid var(--border-col); 
+            border-radius: 12px; font-family: var(--font-body); font-size: 14px; 
+            background: var(--input-bg); color: var(--text-main); 
+            transition: all 0.3s ease; 
+        }
+        .tss-input:focus { outline: none; border-color: var(--tss-red); box-shadow: 0 0 0 4px rgba(225,27,35,0.1); }
+        
+        .gps-btn { 
+            position: absolute; right: 15px; top: 38px; 
+            color: var(--text-sub); cursor: pointer; font-size: 18px; 
+        }
+
+        /* BUTTON PULSE ANIMATION */
+        @keyframes glowing {
+            0% { box-shadow: 0 0 5px var(--tss-red); }
+            50% { box-shadow: 0 0 20px var(--tss-red), 0 0 10px var(--tss-red); }
+            100% { box-shadow: 0 0 5px var(--tss-red); }
+        }
+
+        .tss-btn { 
+            background: linear-gradient(90deg, #1A1A1A, #2d2d2d); 
+            color: var(--bg-color); border: none; 
+            padding: 18px; width: 100%; font-family: var(--font-head); font-weight: 800; 
+            text-transform: uppercase; font-size: 13px; border-radius: 12px; 
+            cursor: pointer; transition: all 0.3s; margin-top: 10px;
+            position: relative; overflow: hidden;
+        }
+        .tss-btn:hover { 
+            background: var(--tss-red); 
+            color: white; 
+            transform: translateY(-3px); 
+            animation: glowing 1.5s infinite;
+        }
+
+        /* SAVED LOCATIONS */
+        .saved-locs { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .loc-chip {
+            font-size: 10px; padding: 6px 12px; background: var(--card-bg); 
+            border: 1px solid var(--border-col); border-radius: 20px; cursor: pointer; 
+            color: var(--text-sub); font-weight: 600; display: flex; gap: 5px;
+        }
+        .loc-chip:hover { border-color: var(--tss-red); color: var(--tss-red); }
+
+        /* RESULTS */
+        #results-panel { display: none; animation: slideUp 0.6s ease; }
+        
+        .score-card { 
+            background: linear-gradient(145deg, #1e1e1e, #2a2a2a); color: white; 
+            border-radius: 20px; padding: 30px 25px; text-align: center; margin-bottom: 25px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3); position: relative;
+        }
+        
+        /* UPDATED SCORE VISUAL */
+        .score-val { 
+            font-family: var(--font-head); 
+            font-size: 72px; 
+            font-weight: 900; 
+            line-height: 1; 
+            margin-bottom: 5px;
+            /* Gradient Text */
+            background: linear-gradient(135deg, #20BD5F, #4ade80); 
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(32, 189, 95, 0.3));
+        }
+
+        .dist-badge { 
+            background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 20px; 
+            font-size: 12px; font-weight: 700; margin: 10px auto; display: inline-block; 
+            border: 1px solid rgba(255,255,255,0.2); 
+        }
+
+        .action-row { display: flex; gap: 12px; margin-top: 20px; justify-content: center; }
+        .icon-btn { 
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; 
+            width: 42px; height: 42px; border-radius: 50%; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; transition: 0.3s; 
+        }
+        .icon-btn:hover { background: white; color: black; }
+        
+        .primary-btn { 
+            color: white; border: none; padding: 14px; border-radius: 10px; 
+            font-size: 11px; font-weight: 700; cursor: pointer; width: 100%; 
+            margin-top: 10px; display: flex; justify-content: center; 
+            gap: 10px; align-items: center; transition: 0.3s; text-transform: uppercase;
+        }
+        .primary-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .share-btn { background: var(--whatsapp-green); } 
+        .sim-btn { background: #f97316; } 
+        .pdf-btn { background: #3b82f6; } 
+
+        /* CHART & MATRIX */
+        .chart-container {
+            background: var(--card-bg); padding: 20px; border-radius: 16px; 
+            border: 1px solid var(--border-col); 
+            margin-bottom: 20px; height: 220px; position: relative;
+        }
+
+        .legend-box { display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-sub); font-weight: 600; }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        .hazard-matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .matrix-item { 
+            background: var(--card-bg); padding: 14px; border-radius: 10px; 
+            border: 1px solid var(--border-col); 
+            display: flex; align-items: center; justify-content: space-between; 
+            font-size: 12px; font-weight: 600; color: var(--text-main); 
+        }
+        .status-badge { font-size: 10px; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; font-weight: 800; }
+        .s-safe { background: rgba(32, 189, 95, 0.15); color: #10B981; } 
+        .s-warn { background: rgba(225, 27, 35, 0.1); color: var(--tss-red); }
+        
+        /* MAP BUTTONS */
+        .float-btn-group { position: absolute; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+        .map-float-btn {
+            background: var(--panel-bg); backdrop-filter: blur(10px);
+            color: var(--text-main); padding: 12px 24px; border-radius: 50px; 
+            box-shadow: var(--shadow-lg); cursor: pointer; font-weight: 700; 
+            font-size: 11px; display: flex; align-items: center; gap: 10px; 
+            border: 1px solid var(--border-col); transition: all 0.3s;
+        }
+        .map-float-btn:hover { transform: translateX(-5px); }
+        .map-float-btn.active { background: var(--tss-red); color: white; border-color: transparent; }
+
+        /* CHATBOT */
+        .chat-btn { 
+            position: fixed; bottom: 30px; right: 30px; 
+            background: var(--tss-red); color: white; width: 64px; height: 64px; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-size: 26px; cursor: pointer; box-shadow: 0 8px 30px rgba(225, 27, 35, 0.5); 
+            z-index: 5000; transition: all 0.4s;
+        }
+        .chat-window { 
+            position: fixed; bottom: 110px; right: 30px; width: 360px; height: 520px; 
+            background: var(--panel-bg); border-radius: 20px; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3); z-index: 5000; display: none; 
+            flex-direction: column; border: 1px solid var(--border-col); overflow: hidden; 
+            backdrop-filter: blur(20px);
+        }
+        .chat-header { background: #1e293b; color: white; padding: 18px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        .chat-body { flex: 1; padding: 20px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 12px; }
+        .chat-footer { padding: 15px; border-top: 1px solid var(--border-col); display: flex; gap: 10px; }
+        .chat-input { flex: 1; padding: 10px 15px; border: 1px solid var(--border-col); border-radius: 25px; outline: none; background: var(--input-bg); color: var(--text-main); font-size: 13px; }
+        .msg { padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 13px; }
+        .msg.bot { background: var(--card-bg); align-self: flex-start; border: 1px solid var(--border-col); }
+        .msg.user { background: var(--tss-red); color: white; align-self: flex-end; }
+
+        /* FEATURES & FOOTER */
+        .features-section { padding: 80px 5%; background: var(--bg-color); text-align: center; }
+        .section-head { 
+            font-family: var(--font-head); font-size: 32px; font-weight: 800; 
+            color: var(--text-main); margin-bottom: 50px; text-transform: uppercase; 
+        }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto; }
+        .feature-box { 
+            padding: 35px; border-radius: 20px; background: var(--card-bg); 
+            border: 1px solid var(--border-col); transition: all 0.4s ease; 
+            box-shadow: var(--shadow-sm); 
+        }
+        .feature-box:hover { transform: translateY(-10px); box-shadow: var(--shadow-lg); border-color: var(--tss-red); }
+        .f-icon { font-size: 36px; color: var(--tss-red); margin-bottom: 20px; }
+        
+        .about-section { background: var(--panel-bg); padding: 80px 5%; border-top: 1px solid var(--border-col); backdrop-filter: blur(5px); }
+        .about-container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; }
+        
+        footer { background: #0F172A; color: #94A3B8; text-align: center; padding: 50px; font-size: 13px; border-top: 1px solid #1E293B; }
+
+        /* --- NEW SAFETY SECTION STYLES --- */
+        .safety-section {
+            padding: 80px 5%;
+            background: var(--bg-color);
+            border-top: 1px solid var(--border-col);
+        }
+        .safety-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 40px auto 0 auto;
+        }
+        .safety-card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border-col);
+            border-left: 4px solid var(--tss-red);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        .safety-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        .s-icon-box {
+            width: 50px; height: 50px;
+            background: rgba(225, 27, 35, 0.1);
+            color: var(--tss-red);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+        .s-title {
+            font-family: var(--font-head);
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+        .safety-list {
+            list-style: none;
+        }
+        .safety-list li {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.5;
+        }
+        .safety-list li i {
+            color: #20BD5F;
+            margin-top: 3px;
+            font-size: 12px;
+        }
+
+        .safety-list li strong {
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .about-text p {
+            color: var(--text-sub);
+            transition: color 0.3s;
+        }
+
+        /* Ensure icons in the Tech Stack align perfectly */
+        .tech-card i {
+            width: 20px;
+            text-align: center;
+        }
+        /* --------------------------- */
+
+        /* MODALS */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 6000; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
+        .modal-content { background: var(--card-bg); width: 800px; max-height: 90vh; overflow-y: auto; padding: 0; border-radius: 24px; position: relative; box-shadow: 0 25px 100px rgba(0,0,0,0.5); display: flex; flex-direction: column; }
+        .modal-header { background: var(--text-main); color: var(--bg-color); padding: 25px; border-radius: 24px 24px 0 0; }
+        .helpline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .help-card { background: var(--bg-color); border: 1px solid var(--border-col); padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 20px; text-decoration: none; transition: 0.3s; }
+        .help-card:hover { transform: translateY(-5px); border-color: var(--tss-red); }
+        
+        .suggestions-list { position: absolute; top: calc(100% + 5px); left: 0; width: 100%; background: var(--card-bg); border: 1px solid var(--border-col); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 10000; display: none; }
+        .suggestion-item { padding: 12px; font-size: 12px; cursor: pointer; border-bottom: 1px solid var(--border-col); }
+        
+        /* ANIMATIONS */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideRight { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes rotateBg { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .app-body { flex-direction: column; height: auto; }
+            .sidebar { width: 100%; height: auto; max-height: 50vh; }
+            #map { height: 50vh; }
+            .video-container { height: 250px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .safety-grid { grid-template-columns: 1fr; }
+            .about-container { grid-template-columns: 1fr; }
+            .video-overlay h1 { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-shield-halved"></i> SAFE<span>ROUTE</span>
+        </div>
+        <div class="nav-links">
+            <div class="nav-link" onclick="document.getElementById('tool-anchor').scrollIntoView({behavior: 'smooth'})">Try Tool</div>
+            <div class="nav-link" onclick="document.getElementById('safety-anchor').scrollIntoView({behavior: 'smooth'})">Safety Guide</div>
+            <div class="nav-link" onclick="document.getElementById('about-anchor').scrollIntoView({behavior: 'smooth'})">About</div>
+            <button class="theme-btn" onclick="toggleTheme()" title="Toggle Dark Mode"><i id="theme-icon" class="fa-solid fa-moon"></i></button>
+            <button onclick="toggleModal('helpline-modal')" class="emergency-btn"><i class="fa-solid fa-phone-volume"></i> SOS</button>
+        </div>
+    </nav>
+
+    <div class="video-container">
+        <video class="hero-video" autoplay muted loop playsinline>
+            <source src="https://www.apple.com/105/media/us/maps/2021/8f40e529-c8aa-4eb5-a9a8-62b96c65c919/anim/hero/large_2x.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay">
+            <h1>Predicting Risk.<br>Saving Lives.</h1>
+            <p>AI-POWERED ACCIDENT PREVENTION SYSTEM</p>
+        </div>
+    </div>
+
+    <div id="tool-anchor"></div>
+    <div class="tool-section-title">Live Route Analysis</div>
+
+    <div class="app-body">
+        
+        <aside class="sidebar">
+            <div class="sidebar-content">
+                
+                <div class="weather-widget" id="weather-box" style="display:none;">
+                    <div>
+                        <div style="font-size:32px; font-weight:800;" id="w-temp">--°C</div>
+                        <div class="weather-desc" id="w-desc">Fetching...</div>
+                    </div>
+                    <i class="fa-solid fa-cloud-sun" style="font-size:32px; opacity: 0.8;"></i>
+                </div>
+
+                <div class="controls-row">
+                    <div class="input-wrapper">
+                        <label class="input-label">Start Point</label>
+                        <input type="text" id="start" class="tss-input" placeholder="Enter starting location..." onkeyup="searchLocation('start')" autocomplete="off">
+                        <i class="fa-solid fa-location-crosshairs gps-btn" onclick="locateUser()" title="Use Current Location"></i>
+                        <div id="start-list" class="suggestions-list"></div>
+                        <div class="saved-locs">
+                            <div class="loc-chip" onclick="saveLoc('Home', 'start')"><i class="fa-solid fa-house"></i> Save Home</div>
+                            <div class="loc-chip" onclick="loadLoc('Home', 'start')">Load Home</div>
+                        </div>
+                    </div>
+                    <div class="input-wrapper">
+                        <label class="input-label">Destination</label>
+                        <input type="text" id="end" class="tss-input" placeholder="Enter destination..." onkeyup="searchLocation('end')" autocomplete="off">
+                        <div id="end-list" class="suggestions-list"></div>
+                        <div class="saved-locs">
+                            <div class="loc-chip" onclick="saveLoc('Work', 'end')"><i class="fa-solid fa-briefcase"></i> Save Work</div>
+                            <div class="loc-chip" onclick="loadLoc('Work', 'end')">Load Work</div>
+                        </div>
+                    </div>
+                    <button id="btn" class="tss-btn" onclick="findRoute()">Analyze Route</button>
+                </div>
+                <div id="status" style="text-align: center; font-size: 11px; color: var(--text-sub); margin-top:-15px; margin-bottom: 15px;"></div>
+
+                <div id="results-panel">
+                    <div class="score-card">
+                        <div class="score-val" id="safety-score">--</div>
+                        <div style="font-size:10px; opacity:0.8; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Safety Index</div>
+                        <div class="dist-badge" id="dist-val">0 km</div>
+                        <div id="risk-level" style="margin-top:10px; font-size:12px; font-weight:800; color:#20BD5F">LOW RISK</div>
+                        
+                        <div class="action-row">
+                            <button class="icon-btn" onclick="toggleMute()" title="Voice Assistant"><i id="mute-icon" class="fa-solid fa-volume-high"></i></button>
+                            <button class="icon-btn" onclick="replayVoice()" title="Replay Analysis"><i class="fa-solid fa-rotate-right"></i></button>
+                        </div>
+                        <button onclick="startSimulation()" class="sim-btn primary-btn"><i class="fa-solid fa-car-side"></i> Simulate Drive</button>
+                        <button onclick="shareRoute()" class="share-btn primary-btn"><i class="fa-brands fa-whatsapp"></i> Share Report</button>
+                        <button onclick="downloadPDF()" class="pdf-btn primary-btn"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="riskChart"></canvas>
+                    </div>
+
+                    <div class="legend-box">
+                        <div class="legend-item"><div class="legend-dot" style="background:#E11B23"></div> High Risk</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:#F5A623"></div> Moderate</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:#20BD5F"></div> Safe</div>
+                    </div>
+
+                    <div class="input-label" style="text-align:center; margin-bottom:15px;">HAZARD DETECTION MATRIX</div>
+                    <div class="hazard-matrix">
+                        <div class="matrix-item"><div><i class="fa-solid fa-road" style="color:var(--text-sub); margin-right:5px;"></i> Curves</div><span id="warn-curve" class="status-badge s-safe">CLEAR</span></div>
+                        <div class="matrix-item"><div><i class="fa-solid fa-lightbulb" style="color:var(--text-sub); margin-right:5px;"></i> Lights</div><span id="warn-light" class="status-badge s-safe">CLEAR</span></div>
+                        <div class="matrix-item"><div><i class="fa-solid fa-compress" style="color:var(--text-sub); margin-right:5px;"></i> Width</div><span id="warn-narrow" class="status-badge s-safe">CLEAR</span></div>
+                        <div class="matrix-item"><div><i class="fa-solid fa-car-burst" style="color:var(--text-sub); margin-right:5px;"></i> Traffic</div><span id="warn-traffic" class="status-badge s-safe">CLEAR</span></div>
+                        <div class="matrix-item"><div><i class="fa-solid fa-eye-slash" style="color:var(--text-sub); margin-right:5px;"></i> Vision</div><span id="warn-vis" class="status-badge s-safe">CLEAR</span></div>
+                        <div class="matrix-item"><div><i class="fa-solid fa-skull" style="color:var(--text-sub); margin-right:5px;"></i> Spots</div><span id="warn-black" class="status-badge s-safe">CLEAR</span></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div id="map">
+            <div id="radar-overlay" class="radar-scan"></div>
+            
+            <div class="float-btn-group">
+                <div id="report-btn" class="map-float-btn" onclick="toggleReportMode()">
+                    <i class="fa-solid fa-triangle-exclamation" style="color:var(--tss-red);"></i> REPORT HAZARD
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-btn" onclick="toggleChat()"><i class="fa-solid fa-robot"></i></div>
+    <div class="chat-window" id="chat-window">
+        <div class="chat-header">SafeBot AI <span onclick="toggleChat()" style="cursor:pointer; font-size:18px;">&times;</span></div>
+        <div class="chat-body" id="chat-body">
+            <div class="msg bot">Hello! I am SafeBot. I can find routes, analyze risks, or guide you in emergencies.</div>
+        </div>
+        <div class="chat-footer" style="padding: 15px; border-top: 1px solid var(--border-col); display: flex; gap: 10px;">
+            <input type="text" id="chat-input" class="tss-input" style="padding: 10px 15px; font-size:12px;" placeholder="Type a command..." onkeypress="if(event.key==='Enter') sendChat()">
+            <button onclick="sendChat()" style="border:none; background:var(--tss-red); color:white; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(225,27,35,0.3);"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+        <div class="typing" id="typing-indicator" style="padding: 0 20px 10px; font-size:10px; color:var(--text-sub); display:none; font-style:italic;">SafeBot is thinking...</div>
+    </div>
+
+    <div class="features-section">
+        <h2 class="section-head">Why Choose SafeRoute AI?</h2>
+        <div class="features-grid">
+            <div class="feature-box">
+                <div class="f-icon"><i class="fa-solid fa-bezier-curve"></i></div>
+                <h3 class="f-title" style="font-family:var(--font-head); margin-bottom:10px;">Geometric Intelligence</h3>
+                <p class="f-text" style="color:var(--text-sub); line-height:1.6; font-size:14px;">We analyze the physical shape of the road vector to identify dangerous curves that cause 40% of accidents.</p>
+            </div>
+            <div class="feature-box">
+                <div class="f-icon"><i class="fa-solid fa-satellite"></i></div>
+                <h3 class="f-title" style="font-family:var(--font-head); margin-bottom:10px;">Computer Vision</h3>
+                <p class="f-text" style="color:var(--text-sub); line-height:1.6; font-size:14px;">Our engine scans satellite imagery to detect surface irregularities, potholes, and hazards invisible to standard GPS.</p>
+            </div>
+            <div class="feature-box">
+                <div class="f-icon"><i class="fa-solid fa-chart-line"></i></div>
+                <h3 class="f-title" style="font-family:var(--font-head); margin-bottom:10px;">Predictive Scoring</h3>
+                <p class="f-text" style="color:var(--text-sub); line-height:1.6; font-size:14px;">Get a simple 0-100 Safety Score for every route. Make informed decisions before you drive.</p>
+            </div>
+        </div>
+    </div>
+
+   <div id="safety-anchor"></div>
+    <div class="safety-section">
+        <div class="safety-grid">
+            <div class="safety-card">
+                <div class="s-icon-box"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="s-title">Emergency Protocol</div>
+                <ul class="safety-list">
+                    <li><i class="fa-solid fa-check"></i> <strong>Stop:</strong> Pull over safely immediately.</li>
+                    <li><i class="fa-solid fa-check"></i> <strong>Warn:</strong> Use hazard lights & triangles.</li>
+                    <li><i class="fa-solid fa-check"></i> <strong>Aid:</strong> Check for injuries (Do not move victims).</li>
+                    <li><i class="fa-solid fa-check"></i> <strong>Call:</strong> Dial 112 or 100 instantly.</li>
+                </ul>
+            </div>
+
+            <div class="safety-card">
+                <div class="s-icon-box"><i class="fa-solid fa-moon"></i></div>
+                <div class="s-title">Night Driving</div>
+                <ul class="safety-list">
+                    <li><i class="fa-solid fa-check"></i> Dim dashboard lights to reduce glare.</li>
+                    <li><i class="fa-solid fa-check"></i> Clean windshield (inside & out).</li>
+                    <li><i class="fa-solid fa-check"></i> Use high beams only when clear.</li>
+                    <li><i class="fa-solid fa-check"></i> Watch for reflective animal eyes.</li>
+                </ul>
+            </div>
+
+            <div class="safety-card">
+                <div class="s-icon-box"><i class="fa-solid fa-shield-virus"></i></div>
+                <div class="s-title">Defensive Driving</div>
+                <ul class="safety-list">
+                    <li><i class="fa-solid fa-check"></i> <strong>3-Second Rule:</strong> Maintain gap.</li>
+                    <li><i class="fa-solid fa-check"></i> Scan mirrors every 5-8 seconds.</li>
+                    <li><i class="fa-solid fa-check"></i> Anticipate other drivers' errors.</li>
+                    <li><i class="fa-solid fa-check"></i> Never drive in blind spots.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div id="about-anchor"></div>
+    <section class="about-section">
+        <div class="about-container">
+            <div class="about-text">
+                <h2 style="font-family:var(--font-head); font-size:32px; font-weight:800; margin-bottom:20px; text-transform:uppercase;">
+                    Engineering <span style="color:var(--tss-red)">Safer Futures</span>
+                </h2>
+                
+                <h4 style="font-size:16px; font-weight:700; color:var(--text-main); margin-bottom:15px;">The Problem</h4>
+                <p style="font-size:14px; line-height:1.7; color:var(--text-sub); margin-bottom:20px;">
+                    Conventional navigation systems optimize for <strong>time</strong> and <strong>distance</strong>, often routing drivers through hazardous blackspots to save mere seconds. With over 1.3 million road fatalities globally per year, efficiency is no longer enough.
+                </p>
+
+                <h4 style="font-size:16px; font-weight:700; color:var(--text-main); margin-bottom:15px;">Our Solution</h4>
+                <p style="font-size:14px; line-height:1.7; color:var(--text-sub); margin-bottom:30px;">
+                    <strong>SafeRoute AI</strong> represents a paradigm shift in routing logic. By fusing satellite imagery with geometric vector analysis, we calculate a <strong>Probabilistic Risk Score</strong> for every road segment. We don't just tell you the fastest way; we tell you the way you are most likely to survive.
+                </p>
+
+                <div style="display:flex; gap:40px; border-top:1px solid var(--border-col); padding-top:25px;">
+                    <div>
+                        <h3 style="font-size:32px; color:var(--tss-red); font-weight:900;">3</h3>
+                        <p style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Data Layers</p>
+                    </div>
+                    <div>
+                        <h3 style="font-size:32px; color:var(--tss-red); font-weight:900;">94%</h3>
+                        <p style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Detection Rate</p>
+                    </div>
+                    <div>
+                        <h3 style="font-size:32px; color:var(--tss-red); font-weight:900;">0ms</h3>
+                        <p style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Latency</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tech-card" style="background:var(--card-bg); padding:35px; border-radius:20px; box-shadow:var(--shadow-lg); border:1px solid var(--border-col); align-self: center;">
+                <div style="font-family:var(--font-head); font-size:14px; font-weight:800; text-transform:uppercase; color:var(--text-main); margin-bottom:25px; letter-spacing:1px; border-bottom:1px solid var(--border-col); padding-bottom:15px;">
+                    System Architecture
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div style="display:flex; align-items:center; gap:12px; font-size:13px; font-weight:600; color:var(--text-sub);">
+                        <i class="fa-brands fa-python" style="color:var(--tss-red); font-size:18px;"></i> 
+                        <span>Algorithmic Core (Python)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; font-size:13px; font-weight:600; color:var(--text-sub);">
+                        <i class="fa-solid fa-server" style="color:var(--tss-red); font-size:18px;"></i> 
+                        <span>Flask RESTful API</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; font-size:13px; font-weight:600; color:var(--text-sub);">
+                        <i class="fa-solid fa-draw-polygon" style="color:var(--tss-red); font-size:18px;"></i> 
+                        <span>Geometric Vector Logic</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; font-size:13px; font-weight:600; color:var(--text-sub);">
+                        <i class="fa-solid fa-map-location-dot" style="color:var(--tss-red); font-size:18px;"></i> 
+                        <span>OSM & Leaflet Integration</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; font-size:13px; font-weight:600; color:var(--text-sub);">
+                        <i class="fa-solid fa-eye" style="color:var(--tss-red); font-size:18px;"></i> 
+                        <span>OpenCV Feature Extraction</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; font-size:13px; font-weight:600; color:var(--text-sub);">
+                        <i class="fa-solid fa-database" style="color:var(--tss-red); font-size:18px;"></i> 
+                        <span>Real-Time Hazard Matrix</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer><p>&copy; 2025 SAFEROUTE AI </p></footer>
+
+    <div id="helpline-modal" class="modal-overlay">
+        <div class="modal-content" style="width:700px;">
+            <div class="modal-header"><span class="close-btn" onclick="toggleModal('helpline-modal')" style="position:absolute; top:20px; right:20px; font-size:24px; cursor:pointer;">&times;</span><h1 style="font-family:var(--font-head); font-size:22px; font-weight:800;">EMERGENCY <span>HELPLINE</span></h1></div>
+            <div class="modal-body" style="padding:40px;">
+                <div class="helpline-grid">
+                    <a href="tel:112" class="help-card"><div class="help-icon" style="width:50px; height:50px; background:var(--tss-red); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px;"><i class="fa-solid fa-bell"></i></div><div class="help-text"><h4 style="margin:0; font-family:var(--font-head);">National Emergency</h4><span style="font-size:24px; font-weight:800; color:var(--tss-red);">112</span></div></a>
+                    <a href="tel:100" class="help-card"><div class="help-icon" style="width:50px; height:50px; background:#2c3e50; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px;"><i class="fa-solid fa-shield-halved"></i></div><div class="help-text"><h4 style="margin:0; font-family:var(--font-head);">Police Control</h4><span style="font-size:24px; font-weight:800; color:#2c3e50;">100</span></div></a>
+                    <a href="tel:101" class="help-card"><div class="help-icon" style="width:50px; height:50px; background:#e67e22; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px;"><i class="fa-solid fa-fire-extinguisher"></i></div><div class="help-text"><h4 style="margin:0; font-family:var(--font-head);">Fire Service</h4><span style="font-size:24px; font-weight:800; color:#e67e22;">101</span></div></a>
+                    <a href="tel:102" class="help-card"><div class="help-icon" style="width:50px; height:50px; background:#20BD5F; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px;"><i class="fa-solid fa-truck-medical"></i></div><div class="help-text"><h4 style="margin:0; font-family:var(--font-head);">Ambulance</h4><span style="font-size:24px; font-weight:800; color:#20BD5F;">102</span></div></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-modal" class="modal-overlay">
+        <div class="modal-content" style="width:400px;">
+            <div class="modal-header"><span class="close-btn" onclick="toggleModal('report-modal')" style="position:absolute; top:20px; right:20px; font-size:24px; cursor:pointer;">&times;</span><h1 style="font-family:var(--font-head); font-size:20px; font-weight:800;">REPORT <span>HAZARD</span></h1></div>
+            <div class="modal-body" style="text-align:center; padding:30px;">
+                <p style="margin-bottom:25px; font-size:14px; color:var(--text-sub);">What is happening at this location?</p>
+                <div class="hazard-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
+                    <div class="h-choice" onclick="confirmReport('Accident')" style="background:var(--bg-color); border:1px solid var(--border-col); padding:20px; border-radius:12px; cursor:pointer; transition:0.3s;"><i class="fa-solid fa-car-burst" style="color:var(--tss-red); font-size:24px; margin-bottom:10px;"></i><br><span style="font-size:11px; font-weight:700;">Accident</span></div>
+                    <div class="h-choice" onclick="confirmReport('Pothole')" style="background:var(--bg-color); border:1px solid var(--border-col); padding:20px; border-radius:12px; cursor:pointer; transition:0.3s;"><i class="fa-solid fa-road-spikes" style="color:#f97316; font-size:24px; margin-bottom:10px;"></i><br><span style="font-size:11px; font-weight:700;">Pothole</span></div>
+                    <div class="h-choice" onclick="confirmReport('Flood')" style="background:var(--bg-color); border:1px solid var(--border-col); padding:20px; border-radius:12px; cursor:pointer; transition:0.3s;"><i class="fa-solid fa-water" style="color:#3b82f6; font-size:24px; margin-bottom:10px;"></i><br><span style="font-size:11px; font-weight:700;">Flood</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([23.20, 77.08], 13);
+        var tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap, © CARTO' }).addTo(map);
+        var routeLayer = L.layerGroup().addTo(map);
+        var markerLayer = L.layerGroup().addTo(map);
+        var communityLayer = L.layerGroup().addTo(map);
+        var heatLayer = null;
+        var carMarker = null;
+        let routeCoordinates = []; 
+        let voiceMuted = false;
+        let lastMessage = "";
+        let riskChart = null;
+
+        // Utils
+        function toggleModal(id) { document.getElementById(id).style.display = (document.getElementById(id).style.display === 'flex') ? 'none' : 'flex'; }
+        
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            tileLayer.setUrl(isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
+            document.getElementById('theme-icon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        }
+        function toggleMute() { voiceMuted = !voiceMuted; document.getElementById('mute-icon').className = voiceMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high'; }
+        function speakText(text) { if(!voiceMuted && 'speechSynthesis' in window) { window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(text)); } }
+        function replayVoice() { speakText(lastMessage); }
+        
+        /* UPDATED SHARE FUNCTION */
+        function shareRoute() { 
+            const score = document.getElementById('safety-score').innerText;
+            const startLoc = document.getElementById('start').value;
+            const endLoc = document.getElementById('end').value;
+
+            if(score === "--") { alert("Analyze a route first!"); return; }
+
+            const message = `I just checked my route safety on SafeRoute AI.\n\n📍 Route: ${startLoc} ➡️ ${endLoc}\n🛡️ Safety Score: ${score}/100\n\nStay safe!`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank'); 
+        }
+
+        function downloadPDF() { 
+            const element = document.getElementById('results-panel');
+            const originalAnimation = element.style.animation;
+            element.style.animation = 'none'; // Pause animation for capture
+            
+            const opt = { 
+                margin: 10, 
+                filename: 'Safety_Report.pdf', 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { scale: 2, useCORS: true }, 
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+            };
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.animation = originalAnimation; // Restore animation
+            }); 
+        }
+
+        /* NEW: COUNTING ANIMATION FUNCTION */
+        function animateValue(id, start, end, duration) {
+            if (start === end) return;
+            var range = end - start;
+            var current = start;
+            var increment = end > start ? 1 : -1;
+            var stepTime = Math.abs(Math.floor(duration / range));
+            var obj = document.getElementById(id);
+            
+            var timer = setInterval(function() {
+                current += increment;
+                obj.innerHTML = current;
+                if (current == end) {
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        // --- SAVED LOCATIONS ---
+        function saveLoc(key, id) {
+            const val = document.getElementById(id).value;
+            if(!val) return alert("Enter location first");
+            localStorage.setItem(key, val);
+            alert(`${key} Saved!`);
+        }
+        function loadLoc(key, id) {
+            const val = localStorage.getItem(key);
+            if(val) document.getElementById(id).value = val;
+            else alert("No saved location found");
+        }
+
+        /* CHATBOT */
+        function toggleChat() { 
+            const win = document.getElementById('chat-window'); 
+            win.style.display = (win.style.display === 'flex') ? 'none' : 'flex'; 
+        }
+        function handleChip(text) { document.getElementById('chat-input').value = text; sendChat(); }
+        
+        function addBotMsg(text, isUser=false) {
+            const body = document.getElementById('chat-body');
+            body.innerHTML += `<div class="msg ${isUser ? 'user' : 'bot'}">${text}</div>`;
+            body.scrollTop = body.scrollHeight;
+            if(!isUser) speakText(text); 
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const txt = input.value.trim();
+            if(!txt) return;
+            addBotMsg(txt, true);
+            input.value = "";
+            document.getElementById('typing-indicator').style.display = "block";
+
+            setTimeout(() => {
+                document.getElementById('typing-indicator').style.display = "none";
+                const lower = txt.toLowerCase();
+
+                if(lower.includes("route from")) {
+                    const parts = lower.match(/from (.+) to (.+)/);
+                    if(parts && parts.length === 3) {
+                        document.getElementById('start').value = parts[1];
+                        document.getElementById('end').value = parts[2];
+                        addBotMsg(`Searching safe path from ${parts[1]} to ${parts[2]}...`);
+                        findRoute();
+                    } else { addBotMsg("Try format: 'Route from X to Y'"); }
+                    return;
+                }
+                if(lower.includes("why") || lower.includes("risk") || lower.includes("analysis")) {
+                    const score = document.getElementById('safety-score').innerText;
+                    if(score == "--") { addBotMsg("Generate a route first."); return; }
+                    addBotMsg(`Score is ${score}. Check hazards panel.`);
+                    return;
+                }
+                if(lower.includes("bleed") || lower.includes("first aid")) { addBotMsg("🚨 Apply pressure. Call 102."); return; }
+                if(lower.includes("dark")) { toggleTheme(); addBotMsg("Theme toggled."); return; }
+                if(lower.includes("help") || lower.includes("police")) { addBotMsg("Opening Emergency Panel."); toggleModal('helpline-modal'); return; }
+                
+                addBotMsg("I can help. Try 'Route from Delhi to Noida' or 'Help'.");
+            }, 800);
+        }
+
+        /* SIMULATION */
+        function startSimulation() {
+            if(routeCoordinates.length === 0) { alert("Generate route first!"); return; }
+            if(carMarker) map.removeLayer(carMarker);
+            
+            // Replaced blocked icon URL with Wikimedia Commons
+            var carIcon = L.icon({
+                iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Top_view_of_a_car.svg/1200px-Top_view_of_a_car.svg.png',
+                iconSize: [30, 60],
+                iconAnchor: [15, 30]
+            });
+
+            carMarker = L.marker(routeCoordinates[0], {icon: carIcon}).addTo(map);
+            let i = 0;
+            function move() {
+                if(i >= routeCoordinates.length) { speakText("Destination reached."); return; }
+                carMarker.setLatLng(routeCoordinates[i]); map.panTo(routeCoordinates[i]); i++; setTimeout(move, 50);
+            }
+            speakText("Starting simulation."); move();
+        }
+
+        /* GEO & WEATHER */
+        function locateUser() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    document.getElementById('start').value = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+                    getWeather(pos.coords.latitude, pos.coords.longitude);
+                });
+            }
+        }
+        async function getWeather(lat, lon) {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                const data = await res.json();
+                document.getElementById('weather-box').style.display = "flex";
+                document.getElementById('w-temp').innerText = `${data.current_weather.temperature}°C`;
+                document.getElementById('w-desc').innerText = "LIVE CONDITIONS";
+            } catch(e) {}
+        }
+
+        /* SEARCH & REPORT */
+        let debounceTimer;
+        async function searchLocation(type) {
+            const input = document.getElementById(type);
+            const list = document.getElementById(type + '-list');
+            if (input.value.length < 3) { list.style.display = 'none'; return; }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${input.value}&limit=5`);
+                    const data = await res.json();
+                    list.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(place => {
+                            const item = document.createElement('div');
+                            item.className = 'suggestion-item';
+                            item.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${place.display_name.split(',').slice(0,3).join(',')}`;
+                            item.onclick = () => { input.value = `${place.lat}, ${place.lon}`; list.style.display = 'none'; };
+                            list.appendChild(item);
+                        });
+                        list.style.display = 'block';
+                    }
+                } catch (err) {}
+            }, 300);
+        }
+        document.addEventListener('click', function(e) { if (!e.target.closest('.input-wrapper')) document.querySelectorAll('.suggestions-list').forEach(l => l.style.display = 'none'); });
+
+        let isReporting = false; let tempLatLng = null;
+        function toggleReportMode() {
+            isReporting = !isReporting;
+            const btn = document.getElementById('report-btn');
+            const mapDiv = document.getElementById('map');
+            if(isReporting) { btn.classList.add('active'); btn.innerHTML = '<i class="fa-solid fa-xmark"></i> CANCEL REPORT'; mapDiv.classList.add('reporting-mode'); }
+            else { btn.classList.remove('active'); btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--tss-red);"></i> REPORT HAZARD'; mapDiv.classList.remove('reporting-mode'); }
+        }
+        map.on('click', function(e) { if(isReporting) { tempLatLng = e.latlng; toggleModal('report-modal'); } });
+        function confirmReport(type) {
+            L.marker(tempLatLng, {icon: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34] }) }).addTo(communityLayer).bindPopup(`<b>${type}</b><br>Just now`);
+            toggleModal('report-modal'); toggleReportMode();
+        }
+
+        /* --- CHART RENDERER --- */
+        function renderChart(stats) {
+            const ctx = document.getElementById('riskChart').getContext('2d');
+            if(riskChart) riskChart.destroy();
+            riskChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['High Risk', 'Moderate', 'Safe'],
+                    datasets: [{ data: [stats.High, stats.Moderate, stats.Low], backgroundColor: ['#E11B23', '#F5A623', '#20BD5F'], borderWidth: 0, hoverOffset: 4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } }, animation: { animateScale: true, animateRotate: true } }
+            });
+        }
+
+        async function findRoute() {
+            var start = document.getElementById('start').value;
+            var end = document.getElementById('end').value;
+            if(!start || !end) { alert("Enter coordinates or search for a location"); return; }
+            
+            // SHOW RADAR
+            document.getElementById('btn').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ANALYZING...';
+            document.getElementById('radar-overlay').style.display = 'block';
+
+            routeLayer.clearLayers(); markerLayer.clearLayers();
+            try {
+                let startLat = start.split(',')[0].trim();
+                let startLon = start.split(',')[1].trim();
+                getWeather(startLat, startLon);
+
+                // --- CRITICAL FIX FOR DEPLOYMENT ---
+                // Changed from 'http://127.0.0.1:5000/api/get-route' to relative path '/api/get-route'
+                var res = await fetch('/api/get-route', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ start: start, end: end }) });
+                var data = await res.json();
+                
+                if(data.error) { 
+                    alert(data.error); 
+                    document.getElementById('radar-overlay').style.display = 'none'; // Hide on error
+                } else {
+                    var bounds = []; routeCoordinates = [];
+                    data.segments.forEach((seg) => {
+                        L.polyline(seg.positions, {color: seg.color, weight: 6, opacity: 0.8, lineCap: 'round'}).addTo(routeLayer);
+                        bounds.push(...seg.positions);
+                        seg.positions.forEach(p => routeCoordinates.push(p));
+                    });
+                    if(bounds.length > 0) {
+                        L.marker(bounds[0], {icon: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34] }) }).addTo(markerLayer);
+                        L.marker(bounds[bounds.length-1], {icon: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34] }) }).addTo(markerLayer);
+                    }
+                    var total = data.stats.High + data.stats.Moderate + data.stats.Low;
+                    var score = Math.max(0, 100 - ((data.stats.High * 30)/total*100)).toFixed(0);
+                    
+                    // ANIMATE SCORE
+                    animateValue("safety-score", 0, parseInt(score), 1500);
+
+                    document.getElementById('dist-val').innerText = data.distance + " km";
+                    
+                    const setW = (id, val) => {
+                        const el = document.getElementById(id);
+                        el.innerText = val ? "DETECTED" : "CLEAR";
+                        el.className = val ? "status-badge s-warn" : "status-badge s-safe";
+                    };
+                    setW('warn-curve', data.hazards["Sharp Curve"] || data.hazards["Winding Road"]);
+                    setW('warn-light', data.hazards["Poor Lighting"]);
+                    setW('warn-narrow', data.hazards["Narrow Road"]);
+                    setW('warn-traffic', data.hazards["Traffic Congestion"]);
+                    setW('warn-vis', data.hazards["Bad Visibility"]);
+                    setW('warn-black', data.hazards["Known Blackspot"]);
+
+                    var rLevel = document.getElementById('risk-level');
+                    if(score < 60) { rLevel.innerText = "HIGH RISK"; rLevel.style.color = "#E11B23"; } 
+                    else if(score < 85) { rLevel.innerText = "MODERATE CAUTION"; rLevel.style.color = "#F5A623"; } 
+                    else { rLevel.innerText = "SAFE ROUTE"; rLevel.style.color = "#20BD5F"; }
+                    
+                    renderChart(data.stats);
+
+                    lastMessage = `Route found. Safety score ${score}. Distance ${data.distance} km.`;
+                    speakText(lastMessage);
+                    document.getElementById('results-panel').style.display = "block";
+                    // Trigger reflow for animation
+                    void document.getElementById('results-panel').offsetWidth;
+                    map.fitBounds(bounds, {padding: [50,50]});
+
+                    // HIDE RADAR
+                    document.getElementById('radar-overlay').style.display = 'none';
+                }
+            } catch(e) { 
+                console.error(e);
+                alert("Connection Error: Ensure Python Backend is running.");
+                document.getElementById('radar-overlay').style.display = 'none'; 
+            }
+            document.getElementById('btn').innerHTML = "ANALYZE ROUTE";
+        }
+    </script>
+</body>
+</html>

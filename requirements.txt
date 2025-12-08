@@ -1,0 +1,13 @@
+Flask
+Flask-Cors
+gunicorn
+osmnx
+pandas
+scikit-learn
+networkx
+requests
+shapely
+geopandas
+rtree
+numpy
+opencv-python-headless
