@@ -388,6 +388,11 @@
         .msg.bot { background: var(--card-bg); align-self: flex-start; border: 1px solid var(--border-col); }
         .msg.user { background: var(--tss-red); color: white; align-self: flex-end; }
 
+        /* RESTORED CHAT CHIPS */
+        .chat-chips { padding: 10px 15px; display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--border-col); }
+        .chip { background: var(--bg-color); border: 1px solid var(--border-col); padding: 6px 12px; border-radius: 15px; font-size: 11px; cursor: pointer; transition: 0.2s; font-weight: 600; color: var(--text-sub); }
+        .chip:hover { background: var(--tss-red); color: white; border-color: var(--tss-red); }
+
         /* FEATURES & FOOTER */
         .features-section { padding: 80px 5%; background: var(--bg-color); text-align: center; }
         .section-head { 
@@ -640,12 +645,12 @@
                     <i class="fa-solid fa-wind"></i> Check Live AQI
                 </button>
 
-                <div class="weather-widget" id="weather-box" style="display:none; gap: 20px; align-items: center; background:transparent; box-shadow:none; padding: 15px 0 0 0; margin-top:0;">
+                <div id="float-weather-box" style="display:none; gap: 20px; align-items: center; background:transparent; box-shadow:none; padding: 15px 0 0 0; margin-top:0;">
                     <div style="display:flex; align-items:center; gap:10px;">
                         <i class="fa-solid fa-cloud-sun" style="font-size:24px; opacity: 0.9; color: var(--text-main);"></i>
                         <div>
-                            <div style="font-size:20px; font-weight:800; color: var(--text-main);" id="w-temp">--°C</div>
-                            <div id="w-desc" class="weather-desc" style="color: var(--text-sub);">Temp</div>
+                            <div style="font-size:20px; font-weight:800; color: var(--text-main);" id="float-temp">--°C</div>
+                            <div class="weather-desc" style="color: var(--text-sub);" id="float-desc">Temp</div>
                         </div>
                     </div>
 
@@ -654,7 +659,7 @@
                     <div style="display:flex; align-items:center; gap:10px;">
                         <i class="fa-solid fa-wind" style="font-size:24px; opacity: 0.9; color: var(--text-main);"></i>
                         <div>
-                            <div style="font-size:20px; font-weight:800;" id="w-aqi">--</div>
+                            <div style="font-size:20px; font-weight:800;" id="float-aqi">--</div>
                             <div class="weather-desc" style="color: var(--text-sub);">AQI Index</div>
                         </div>
                     </div>
@@ -670,7 +675,15 @@
         <div class="chat-body" id="chat-body">
             <div class="msg bot">Hello! I am SafeBot. I can find routes, analyze risks, or guide you in emergencies.</div>
         </div>
-        <div class="chat-footer" style="padding: 15px; border-top: 1px solid var(--border-col); display: flex; gap: 10px;">
+        
+        <div class="chat-chips">
+            <div class="chip" onclick="handleChip('Help!')">🚨 Emergency</div>
+            <div class="chip" onclick="handleChip('Analysis')">📊 Risk Analysis</div>
+            <div class="chip" onclick="handleChip('First Aid')">🩹 First Aid</div>
+            <div class="chip" onclick="handleChip('Dark Mode')">🌙 Toggle Theme</div>
+        </div>
+
+        <div class="chat-footer">
             <input type="text" id="chat-input" class="tss-input" style="padding: 10px 15px; font-size:12px;" placeholder="Type a command..." onkeypress="if(event.key==='Enter') sendChat()">
             <button onclick="sendChat()" style="border:none; background:var(--tss-red); color:white; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(225,27,35,0.3);"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
@@ -847,7 +860,6 @@
         let lastMessage = "";
         let riskChart = null;
 
-        // Utils
         function toggleModal(id) { document.getElementById(id).style.display = (document.getElementById(id).style.display === 'flex') ? 'none' : 'flex'; }
         
         function toggleTheme() {
@@ -860,41 +872,27 @@
         function speakText(text) { if(!voiceMuted && 'speechSynthesis' in window) { window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(text)); } }
         function replayVoice() { speakText(lastMessage); }
 
-        /* NEW FUNCTION: Check Live AQI Button */
         function checkLiveAQI() {
             if (navigator.geolocation) {
-                // Show the box immediately with "Loading" text
-                document.getElementById('weather-box').style.display = 'flex';
-                document.getElementById('w-desc').innerText = "Locating...";
-                document.getElementById('w-aqi').innerText = "--";
-
+                document.getElementById('float-weather-box').style.display = 'flex';
+                document.getElementById('float-desc').innerText = "Locating...";
+                document.getElementById('float-aqi').innerText = "--";
                 navigator.geolocation.getCurrentPosition((pos) => {
-                    // 1. Fetch Data
+                    document.getElementById('float-desc').innerText = "LIVE CONDITIONS";
                     getWeather(pos.coords.latitude, pos.coords.longitude);
-                    
-                    // 2. Optional: Fill the start box so they can route from here easily
                     document.getElementById('start').value = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
-                    
-                    // 3. Update Text
-                    document.getElementById('w-desc').innerText = "LIVE CONDITIONS";
-                    
                 }, (err) => {
                     alert("Please allow location access to see the Air Quality Index.");
-                    document.getElementById('weather-box').style.display = 'none';
+                    document.getElementById('float-weather-box').style.display = 'none';
                 });
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
+            } else { alert("Geolocation is not supported by this browser."); }
         }
         
-        /* UPDATED SHARE FUNCTION */
         function shareRoute() { 
             const score = document.getElementById('safety-score').innerText;
             const startLoc = document.getElementById('start').value;
             const endLoc = document.getElementById('end').value;
-
             if(score === "--") { alert("Analyze a route first!"); return; }
-
             const message = `I just checked my route safety on SafeRoute AI.\n\n📍 Route: ${startLoc} ➡️ ${endLoc}\n🛡️ Safety Score: ${score}/100\n\nStay safe!`;
             window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank'); 
         }
@@ -902,22 +900,11 @@
         function downloadPDF() { 
             const element = document.getElementById('results-panel');
             const originalAnimation = element.style.animation;
-            element.style.animation = 'none'; // Pause animation for capture
-            
-            const opt = { 
-                margin: 10, 
-                filename: 'Safety_Report.pdf', 
-                image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { scale: 2, useCORS: true }, 
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
-            };
-            
-            html2pdf().set(opt).from(element).save().then(() => {
-                element.style.animation = originalAnimation; // Restore animation
-            }); 
+            element.style.animation = 'none'; 
+            const opt = { margin: 10, filename: 'Safety_Report.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            html2pdf().set(opt).from(element).save().then(() => { element.style.animation = originalAnimation; }); 
         }
 
-        /* NEW: COUNTING ANIMATION FUNCTION */
         function animateValue(id, start, end, duration) {
             if (start === end) return;
             var range = end - start;
@@ -925,17 +912,13 @@
             var increment = end > start ? 1 : -1;
             var stepTime = Math.abs(Math.floor(duration / range));
             var obj = document.getElementById(id);
-            
             var timer = setInterval(function() {
                 current += increment;
                 obj.innerHTML = current;
-                if (current == end) {
-                    clearInterval(timer);
-                }
+                if (current == end) { clearInterval(timer); }
             }, stepTime);
         }
 
-        // --- SAVED LOCATIONS ---
         function saveLoc(key, id) {
             const val = document.getElementById(id).value;
             if(!val) return alert("Enter location first");
@@ -948,11 +931,12 @@
             else alert("No saved location found");
         }
 
-        /* CHATBOT */
         function toggleChat() { 
             const win = document.getElementById('chat-window'); 
             win.style.display = (win.style.display === 'flex') ? 'none' : 'flex'; 
         }
+        
+        /* RESTORED: Handle Chat Chips */
         function handleChip(text) { document.getElementById('chat-input').value = text; sendChat(); }
         
         function addBotMsg(text, isUser=false) {
@@ -969,11 +953,9 @@
             addBotMsg(txt, true);
             input.value = "";
             document.getElementById('typing-indicator').style.display = "block";
-
             setTimeout(() => {
                 document.getElementById('typing-indicator').style.display = "none";
                 const lower = txt.toLowerCase();
-
                 if(lower.includes("route from")) {
                     const parts = lower.match(/from (.+) to (.+)/);
                     if(parts && parts.length === 3) {
@@ -993,23 +975,14 @@
                 if(lower.includes("bleed") || lower.includes("first aid")) { addBotMsg("🚨 Apply pressure. Call 102."); return; }
                 if(lower.includes("dark")) { toggleTheme(); addBotMsg("Theme toggled."); return; }
                 if(lower.includes("help") || lower.includes("police")) { addBotMsg("Opening Emergency Panel."); toggleModal('helpline-modal'); return; }
-                
                 addBotMsg("I can help. Try 'Route from Delhi to Noida' or 'Help'.");
             }, 800);
         }
 
-        /* SIMULATION */
         function startSimulation() {
             if(routeCoordinates.length === 0) { alert("Generate route first!"); return; }
             if(carMarker) map.removeLayer(carMarker);
-            
-            // Replaced blocked icon URL with Wikimedia Commons
-            var carIcon = L.icon({
-                iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Top_view_of_a_car.svg/1200px-Top_view_of_a_car.svg.png',
-                iconSize: [30, 60],
-                iconAnchor: [15, 30]
-            });
-
+            var carIcon = L.icon({ iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Top_view_of_a_car.svg/1200px-Top_view_of_a_car.svg.png', iconSize: [30, 60], iconAnchor: [15, 30] });
             carMarker = L.marker(routeCoordinates[0], {icon: carIcon}).addTo(map);
             let i = 0;
             function move() {
@@ -1019,56 +992,42 @@
             speakText("Starting simulation."); move();
         }
 
-        /* GEO & WEATHER */
         function locateUser() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((pos) => {
                     document.getElementById('start').value = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-                    // REMOVED getWeather() from here to respect the "only on button click" rule if desired,
-                    // but usually when locating user for input, we don't show AQI unless asked.
-                    // Kept strictly to inputs.
                 });
             }
         }
-        /* UPDATED GEO & WEATHER & AQI FUNCTION */
+
         async function getWeather(lat, lon) {
             try {
-                // 1. Fetch Weather
                 const resW = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
                 const dataW = await resW.json();
-                
-                // 2. Fetch AQI (New Step)
                 const resA = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi`);
                 const dataA = await resA.json();
 
-                // 3. Show the Box
-                document.getElementById('weather-box').style.display = "flex";
+                document.getElementById('float-weather-box').style.display = "flex";
 
-                // 4. Update Temperature
-                document.getElementById('w-temp').innerText = `${dataW.current_weather.temperature}°C`;
-                
-                // 5. Update AQI with Color Logic
-                const aqi = dataA.current.us_aqi;
-                const aqiEl = document.getElementById('w-aqi');
-                aqiEl.innerText = aqi;
-
-                // Change color based on pollution level
-                if (aqi <= 50) {
-                    aqiEl.style.color = "#66ff66"; // Green (Good)
-                } else if (aqi <= 100) {
-                    aqiEl.style.color = "#ffeb3b"; // Yellow (Moderate)
-                } else if (aqi <= 150) {
-                    aqiEl.style.color = "#ff9800"; // Orange (Unhealthy for Sensitive)
-                } else {
-                    aqiEl.style.color = "#ff4444"; // Red (Unhealthy)
+                if(dataW.current_weather) {
+                    document.getElementById('float-temp').innerText = `${dataW.current_weather.temperature}°C`;
                 }
-
+                
+                if(dataA.current) {
+                    const aqi = dataA.current.us_aqi;
+                    const aqiEl = document.getElementById('float-aqi');
+                    aqiEl.innerText = aqi;
+                    if (aqi <= 50) aqiEl.style.color = "#66ff66";       
+                    else if (aqi <= 100) aqiEl.style.color = "#ffeb3b"; 
+                    else if (aqi <= 150) aqiEl.style.color = "#ff9800"; 
+                    else aqiEl.style.color = "#ff4444";                 
+                }
             } catch(e) {
-                console.error("Weather/AQI Error:", e);
+                console.error("Weather/AQI API Error:", e);
+                document.getElementById('float-desc').innerText = "Error";
             }
         }
 
-        /* SEARCH & REPORT */
         let debounceTimer;
         async function searchLocation(type) {
             const input = document.getElementById(type);
@@ -1109,7 +1068,6 @@
             toggleModal('report-modal'); toggleReportMode();
         }
 
-        /* --- CHART RENDERER --- */
         function renderChart(stats) {
             const ctx = document.getElementById('riskChart').getContext('2d');
             if(riskChart) riskChart.destroy();
@@ -1128,7 +1086,6 @@
             var end = document.getElementById('end').value;
             if(!start || !end) { alert("Enter coordinates or search for a location"); return; }
             
-            // SHOW RADAR
             document.getElementById('btn').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ANALYZING...';
             document.getElementById('radar-overlay').style.display = 'block';
 
@@ -1137,17 +1094,12 @@
                 let startLat = start.split(',')[0].trim();
                 let startLon = start.split(',')[1].trim();
                 
-                // REMOVED getWeather(startLat, startLon) FROM HERE 
-                // TO ENSURE AQI IS ONLY VISIBLE WHEN CLICKING THE BUTTON
-
-                // --- CRITICAL FIX FOR DEPLOYMENT ---
-                // Changed from 'http://127.0.0.1:5000/api/get-route' to relative path '/api/get-route'
                 var res = await fetch('/api/get-route', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ start: start, end: end }) });
                 var data = await res.json();
                 
                 if(data.error) { 
                     alert(data.error); 
-                    document.getElementById('radar-overlay').style.display = 'none'; // Hide on error
+                    document.getElementById('radar-overlay').style.display = 'none'; 
                 } else {
                     var bounds = []; routeCoordinates = [];
                     data.segments.forEach((seg) => {
@@ -1162,9 +1114,7 @@
                     var total = data.stats.High + data.stats.Moderate + data.stats.Low;
                     var score = Math.max(0, 100 - ((data.stats.High * 30)/total*100)).toFixed(0);
                     
-                    // ANIMATE SCORE
                     animateValue("safety-score", 0, parseInt(score), 1500);
-
                     document.getElementById('dist-val').innerText = data.distance + " km";
                     
                     const setW = (id, val) => {
@@ -1189,11 +1139,8 @@
                     lastMessage = `Route found. Safety score ${score}. Distance ${data.distance} km.`;
                     speakText(lastMessage);
                     document.getElementById('results-panel').style.display = "block";
-                    // Trigger reflow for animation
                     void document.getElementById('results-panel').offsetWidth;
                     map.fitBounds(bounds, {padding: [50,50]});
-
-                    // HIDE RADAR
                     document.getElementById('radar-overlay').style.display = 'none';
                 }
             } catch(e) { 
