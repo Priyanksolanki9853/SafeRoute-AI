@@ -17,7 +17,9 @@ ox.settings.timeout = 180
 
 @app.route('/')
 def home():
-    return render_template('Index.html') 
+    # Securely fetch the key from Render's Environment Variables
+    api_key = os.environ.get("GEMINI_API_KEY", "") 
+    return render_template('Index.html', gemini_key=api_key)
 
 @app.route('/api/get-route', methods=['POST'])
 def get_route_api():
