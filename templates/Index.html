@@ -562,21 +562,7 @@
                             <div class="loc-chip" onclick="loadLoc('Home', 'start')">Load Home</div>
                         </div>
                     </div>
-                    <div class="input-wrapper">
-                        <label class="input-label">Destination</label>
-                        <input type="text" id="end" class="tss-input" placeholder="Enter destination..." onkeyup="searchLocation('end')" autocomplete="off">
-                        <div id="end-list" class="suggestions-list"></div>
-                        <div class="saved-locs">
-                            <div class="loc-chip" onclick="saveLoc('Work', 'end')"><i class="fa-solid fa-briefcase"></i> Save Work</div>
-                            <div class="loc-chip" onclick="loadLoc('Work', 'end')">Load Work</div>
-                        </div>
-                    </div>
-                    <button class="tss-btn" onclick="checkLiveAQI()" style="background: linear-gradient(90deg, #0ea5e9, #0284c7); margin-bottom: 15px;">
-    <i class="fa-solid fa-wind"></i> Check Live AQI
-</button>
-<button id="btn" class="tss-btn" onclick="findRoute()">Analyze Route</button>
-                </div>
-                <button onclick="checkLiveAQI()" style="
+                    <button onclick="checkLiveAQI()" style="
     width: 100%; 
     padding: 18px; 
     background: linear-gradient(90deg, #0ea5e9, #0284c7); 
@@ -592,6 +578,20 @@
     font-family: 'Montserrat', sans-serif;">
     <i class="fa-solid fa-wind"></i> Check Live AQI
 </button>
+<button id="btn" class="tss-btn" onclick="findRoute()">Analyze Route</button>
+                    <div class="input-wrapper">
+                        <label class="input-label">Destination</label>
+                        <input type="text" id="end" class="tss-input" placeholder="Enter destination..." onkeyup="searchLocation('end')" autocomplete="off">
+                        <div id="end-list" class="suggestions-list"></div>
+                        <div class="saved-locs">
+                            <div class="loc-chip" onclick="saveLoc('Work', 'end')"><i class="fa-solid fa-briefcase"></i> Save Work</div>
+                            <div class="loc-chip" onclick="loadLoc('Work', 'end')">Load Work</div>
+                        </div>
+                    </div>
+                    <button class="tss-btn" onclick="checkLiveAQI()" style="background: linear-gradient(90deg, #0ea5e9, #0284c7); margin-bottom: 15px;">
+    <i class="fa-solid fa-wind"></i> Check Live AQI
+</button>
+                </div>
                 <div id="status" style="text-align: center; font-size: 11px; color: var(--text-sub); margin-top:-15px; margin-bottom: 15px;"></div>
 
                 <div id="results-panel">
