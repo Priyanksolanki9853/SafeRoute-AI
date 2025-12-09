@@ -7,7 +7,7 @@ import numpy as np
 import os
 import random
 import gc
-import requests # <--- NEW: Required for Chatbot to talk to Google
+import requests # <--- NEW: Required for the Chatbot to work
 
 app = Flask(__name__)
 CORS(app)
@@ -18,42 +18,52 @@ ox.settings.timeout = 180
 
 @app.route('/')
 def home():
-    # We no longer need to pass the key to the frontend!
-    return render_template('Index.html')
+    # Securely fetch the key from Render's Environment Variables
+    api_key = os.environ.get("GEMINI_API_KEY", "") 
+    return render_template('Index.html', gemini_key=api_key)
 
-# --- NEW: SMART CHATBOT ROUTE ---
+# --- NEW: SMART CHATBOT ROUTE (Fixes Connection Errors) ---
 @app.route('/api/chat', methods=['POST'])
 def chat_proxy():
     try:
         data = request.json
         user_message = data.get('message', '')
         
-        # Securely get key from Render Environment
+        # 1. Get Key from Server Environment
         api_key = os.environ.get("GEMINI_API_KEY")
-        
         if not api_key:
-            return jsonify({"error": "API Key is missing on the server."}), 500
+            return jsonify({"error": "Server API Key is missing"}), 500
 
-        # Call Google Gemini API (Server-to-Server)
-        # Using gemini-1.5-flash for speed/cost, fallback to gemini-pro if needed
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
+        # 2. Try 'gemini-1.5-flash' first (Fastest)
+        # 3. If that fails, auto-switch to 'gemini-pro' (Most Compatible)
+        models_to_try = ["gemini-1.5-flash", "gemini-pro"]
         
-        payload = {
-            "contents": [{
-                "parts": [{"text": "You are SafeBot, a helpful road safety assistant. Keep answers concise (max 50 words). User says: " + user_message}]
-            }]
-        }
-        
-        # Send request to Google
-        response = requests.post(url, json=payload)
-        
-        # Return Google's answer to our Frontend
-        return jsonify(response.json())
+        last_error = ""
+
+        for model in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            payload = {
+                "contents": [{
+                    "parts": [{"text": "You are SafeBot, a road safety AI. Answer in 1-2 sentences. User: " + user_message}]
+                }]
+            }
+            
+            response = requests.post(url, json=payload)
+            
+            if response.status_code == 200:
+                # Success! Return the answer to the frontend
+                return jsonify(response.json())
+            else:
+                last_error = response.text
+                print(f"⚠️ Model {model} failed. Trying next...")
+
+        # If we get here, both models failed
+        return jsonify({"error": f"AI unavailable. Details: {last_error}"}), 500
 
     except Exception as e:
         print(f"Chat Error: {e}")
         return jsonify({"error": str(e)}), 500
-# --------------------------------
+# ----------------------------------------------------------
 
 @app.route('/api/get-route', methods=['POST'])
 def get_route_api():
