@@ -571,7 +571,9 @@
                             <div class="loc-chip" onclick="loadLoc('Work', 'end')">Load Work</div>
                         </div>
                     </div>
-                    <button id="btn" class="tss-btn" onclick="findRoute()">Analyze Route</button>
+                    <button class="tss-btn" onclick="checkLiveAQI()" style="background: linear-gradient(90deg, #0ea5e9, #0284c7); margin-bottom: 15px;">
+    <i class="fa-solid fa-wind"></i> Check Live AQI
+</button>
                 </div>
                 <div id="status" style="text-align: center; font-size: 11px; color: var(--text-sub); margin-top:-15px; margin-bottom: 15px;"></div>
 
@@ -820,6 +822,33 @@
         function toggleMute() { voiceMuted = !voiceMuted; document.getElementById('mute-icon').className = voiceMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high'; }
         function speakText(text) { if(!voiceMuted && 'speechSynthesis' in window) { window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(text)); } }
         function replayVoice() { speakText(lastMessage); }
+
+        /* NEW FUNCTION: Check Live AQI Button */
+function checkLiveAQI() {
+    if (navigator.geolocation) {
+        // Show the box immediately with "Loading" text
+        document.getElementById('weather-box').style.display = 'flex';
+        document.getElementById('w-desc').innerText = "Locating...";
+        document.getElementById('w-aqi').innerText = "--";
+
+        navigator.geolocation.getCurrentPosition((pos) => {
+            // 1. Fetch Data
+            getWeather(pos.coords.latitude, pos.coords.longitude);
+            
+            // 2. Optional: Fill the start box so they can route from here easily
+            document.getElementById('start').value = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+            
+            // 3. Update Text
+            document.getElementById('w-desc').innerText = "LIVE CONDITIONS";
+            
+        }, (err) => {
+            alert("Please allow location access to see the Air Quality Index.");
+            document.getElementById('weather-box').style.display = 'none';
+        });
+    } else {
+        alert("Geolocation is not supported by this browser.");
+    }
+}
         
         /* UPDATED SHARE FUNCTION */
         function shareRoute() { 
