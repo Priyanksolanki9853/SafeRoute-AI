@@ -531,14 +531,26 @@
         <aside class="sidebar">
             <div class="sidebar-content">
                 
-                <div class="weather-widget" id="weather-box" style="display:none;">
-                    <div>
-                        <div style="font-size:32px; font-weight:800;" id="w-temp">--°C</div>
-                        <div class="weather-desc" id="w-desc">Fetching...</div>
-                    </div>
-                    <i class="fa-solid fa-cloud-sun" style="font-size:32px; opacity: 0.8;"></i>
-                </div>
+               <div class="weather-widget" id="weather-box" style="display:none; gap: 20px; align-items: center;">
+    
+    <div style="display:flex; align-items:center; gap:10px;">
+        <i class="fa-solid fa-cloud-sun" style="font-size:28px; opacity: 0.9;"></i>
+        <div>
+            <div style="font-size:24px; font-weight:800;" id="w-temp">--°C</div>
+            <div class="weather-desc">Temp</div>
+        </div>
+    </div>
 
+    <div style="width:1px; height:35px; background:rgba(255,255,255,0.3);"></div>
+
+    <div style="display:flex; align-items:center; gap:10px;">
+        <i class="fa-solid fa-wind" style="font-size:28px; opacity: 0.9;"></i>
+        <div>
+            <div style="font-size:24px; font-weight:800;" id="w-aqi">--</div>
+            <div class="weather-desc">AQI Index</div>
+        </div>
+    </div>
+</div>
                 <div class="controls-row">
                     <div class="input-wrapper">
                         <label class="input-label">Start Point</label>
@@ -950,15 +962,43 @@
                 });
             }
         }
-        async function getWeather(lat, lon) {
-            try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-                const data = await res.json();
-                document.getElementById('weather-box').style.display = "flex";
-                document.getElementById('w-temp').innerText = `${data.current_weather.temperature}°C`;
-                document.getElementById('w-desc').innerText = "LIVE CONDITIONS";
-            } catch(e) {}
+       /* UPDATED GEO & WEATHER & AQI FUNCTION */
+async function getWeather(lat, lon) {
+    try {
+        // 1. Fetch Weather
+        const resW = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        const dataW = await resW.json();
+        
+        // 2. Fetch AQI (New Step)
+        const resA = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi`);
+        const dataA = await resA.json();
+
+        // 3. Show the Box
+        document.getElementById('weather-box').style.display = "flex";
+
+        // 4. Update Temperature
+        document.getElementById('w-temp').innerText = `${dataW.current_weather.temperature}°C`;
+        
+        // 5. Update AQI with Color Logic
+        const aqi = dataA.current.us_aqi;
+        const aqiEl = document.getElementById('w-aqi');
+        aqiEl.innerText = aqi;
+
+        // Change color based on pollution level
+        if (aqi <= 50) {
+            aqiEl.style.color = "#66ff66"; // Green (Good)
+        } else if (aqi <= 100) {
+            aqiEl.style.color = "#ffeb3b"; // Yellow (Moderate)
+        } else if (aqi <= 150) {
+            aqiEl.style.color = "#ff9800"; // Orange (Unhealthy for Sensitive)
+        } else {
+            aqiEl.style.color = "#ff4444"; // Red (Unhealthy)
         }
+
+    } catch(e) {
+        console.error("Weather/AQI Error:", e);
+    }
+}
 
         /* SEARCH & REPORT */
         let debounceTimer;
