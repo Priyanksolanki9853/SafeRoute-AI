@@ -7,7 +7,7 @@ import numpy as np
 import os
 import random
 import gc
-import requests # <--- NEW: Required for the Chatbot to work
+import requests # Required for the Chatbot to work
 
 app = Flask(__name__)
 CORS(app)
@@ -18,11 +18,10 @@ ox.settings.timeout = 180
 
 @app.route('/')
 def home():
-    # Securely fetch the key from Render's Environment Variables
-    api_key = os.environ.get("GEMINI_API_KEY", "") 
-    return render_template('Index.html', gemini_key=api_key)
+    # We no longer need to pass the key to the frontend!
+    return render_template('Index.html')
 
-# --- NEW: SMART CHATBOT ROUTE (Fixes Connection Errors) ---
+# --- UPGRADED: SMART CHATBOT ROUTE (Auto-Fixes 404 Errors) ---
 @app.route('/api/chat', methods=['POST'])
 def chat_proxy():
     try:
@@ -30,18 +29,27 @@ def chat_proxy():
         user_message = data.get('message', '')
         
         # 1. Get Key from Server Environment
-        api_key = os.environ.get("GEMINI_API_KEY")
+        api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+        
         if not api_key:
             return jsonify({"error": "Server API Key is missing"}), 500
 
-        # 2. Try 'gemini-1.5-flash' first (Fastest)
-        # 3. If that fails, auto-switch to 'gemini-pro' (Most Compatible)
-        models_to_try = ["gemini-1.5-flash", "gemini-pro"]
+        # 2. Smart Model Switching (Try New -> Fallback to Old)
+        # This fixes the "404 Not Found" error if your key doesn't support the newest model
+        models_to_try = [
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-pro"
+        ]
         
         last_error = ""
+        success = False
+        result_json = {}
 
         for model in models_to_try:
+            print(f"🤖 Chatbot trying model: {model}...")
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            
             payload = {
                 "contents": [{
                     "parts": [{"text": "You are SafeBot, a road safety AI. Answer in 1-2 sentences. User: " + user_message}]
@@ -51,14 +59,25 @@ def chat_proxy():
             response = requests.post(url, json=payload)
             
             if response.status_code == 200:
-                # Success! Return the answer to the frontend
-                return jsonify(response.json())
+                result_json = response.json()
+                success = True
+                break # It worked! Stop trying other models.
             else:
+                print(f"⚠️ {model} failed: {response.status_code}")
                 last_error = response.text
-                print(f"⚠️ Model {model} failed. Trying next...")
 
-        # If we get here, both models failed
-        return jsonify({"error": f"AI unavailable. Details: {last_error}"}), 500
+        if success:
+            return jsonify(result_json)
+        else:
+            # If all AI models fail, return a safe fallback message
+            print("❌ All AI models failed.")
+            return jsonify({
+                "candidates": [{
+                    "content": {
+                        "parts": [{"text": "I am currently offline due to a connection issue, but I can still help you route! Please use the controls on the left."}]
+                    }
+                }]
+            })
 
     except Exception as e:
         print(f"Chat Error: {e}")
