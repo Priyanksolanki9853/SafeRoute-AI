@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+import gc
 import osmnx as ox
 import networkx as nx
 import numpy as np
@@ -23,6 +24,9 @@ def home():
 
 @app.route('/api/get-route', methods=['POST'])
 def get_route_api():
+    del graph
+    del route
+    gc.collect()
     try:
         req = request.json
         print(f"\n🚀 Processing: {req.get('start')} -> {req.get('end')}")
