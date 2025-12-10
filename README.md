@@ -1,4 +1,5 @@
-<img width="1024" height="559" alt="image" src="https://github.com/user-attachments/assets/cd99946f-177a-49cc-98b2-41dfb06a330a" />
+<img width="665" height="370" alt="image" src="https://github.com/user-attachments/assets/ca96b520-191c-4576-81e4-b276a342cb81" />
+
 
 
 # 🛡️ SafeRoute AI | AI-Powered Accident Prevention System
