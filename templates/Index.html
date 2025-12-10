@@ -395,6 +395,28 @@
         .chip { background: var(--bg-color); border: 1px solid var(--border-col); padding: 6px 12px; border-radius: 15px; font-size: 11px; cursor: pointer; transition: 0.2s; font-weight: 600; color: var(--text-sub); }
         .chip:hover { background: var(--tss-red); color: white; border-color: var(--tss-red); }
 
+        /* NEW ASK AI SECTION CSS */
+        .ai-banner {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 60px 5%;
+            text-align: center;
+            color: white;
+            margin: 40px 0;
+            border-top: 1px solid var(--border-col);
+            border-bottom: 1px solid var(--border-col);
+        }
+        .ai-content h2 { font-family: var(--font-head); font-size: 32px; margin-bottom: 15px; font-weight: 800; }
+        .ai-content p { color: #94a3b8; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .ai-btn {
+            background: linear-gradient(90deg, #E11B23, #b91c1c);
+            color: white; padding: 15px 35px; border-radius: 30px;
+            text-decoration: none; font-weight: 700; font-size: 14px;
+            display: inline-flex; align-items: center; gap: 10px;
+            box-shadow: 0 4px 15px rgba(225, 27, 35, 0.4);
+            transition: 0.3s; border: none; cursor: pointer;
+        }
+        .ai-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(225, 27, 35, 0.5); }
+
         /* FEATURES & FOOTER */
         .features-section { padding: 80px 5%; background: var(--bg-color); text-align: center; }
         .section-head { 
@@ -413,7 +435,51 @@
         .about-section { background: var(--panel-bg); padding: 80px 5%; border-top: 1px solid var(--border-col); backdrop-filter: blur(5px); }
         .about-container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; }
         
-        footer { background: #0F172A; color: #94A3B8; text-align: center; padding: 50px; font-size: 13px; border-top: 1px solid #1E293B; }
+        /* UPDATED FOOTER STYLES FOR SYMBOLS ONLY */
+        footer { 
+            background: #0F172A; 
+            color: #94A3B8; 
+            padding: 60px 5%; 
+            border-top: 1px solid #1E293B; 
+        }
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .footer-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .footer-link {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 20px; /* Bigger Icon */
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center the icon */
+            width: 45px; /* Fixed size */
+            height: 45px;
+            border-radius: 50%; /* Circle shape */
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .footer-link:hover {
+            color: white;
+            background: var(--tss-red);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(225, 27, 35, 0.3);
+        }
+        .footer-copy {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-top: 10px;
+        }
 
         /* --- NEW SAFETY SECTION STYLES --- */
         .safety-section {
@@ -520,6 +586,7 @@
             .safety-grid { grid-template-columns: 1fr; }
             .about-container { grid-template-columns: 1fr; }
             .video-overlay h1 { font-size: 32px; }
+            .footer-links { flex-direction: row; }
         }
     </style>
 </head>
@@ -713,7 +780,17 @@
         </div>
     </div>
 
-   <div id="safety-anchor"></div>
+    <div class="ai-banner">
+        <div class="ai-content">
+            <i class="fa-solid fa-robot" style="font-size: 48px; color: var(--tss-red); margin-bottom: 20px;"></i>
+            <h2>Have Questions? Ask <span style="color: var(--tss-red);">SafeBot</span></h2>
+            <p>Not sure about a route? Need immediate safety advice? Our AI-powered assistant is ready to help you 24/7.</p>
+            <button onclick="toggleChat()" class="ai-btn">
+                <i class="fa-solid fa-comments"></i> Chat with AI
+            </button>
+        </div>
+    </div>
+    <div id="safety-anchor"></div>
     <div class="safety-section">
         <div class="safety-grid">
             <div class="safety-card">
@@ -818,8 +895,22 @@
         </div>
     </section>
 
-    <footer><p>&copy; 2025 SAFEROUTE AI </p></footer>
-
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="https://github.com/Priyanksolanki9853/accident-route-advisor" target="_blank" class="footer-link" title="GitHub Repository">
+                    <i class="fa-brands fa-github"></i>
+                </a>
+                <a href="mailto:priyanksolanki9853@gmail.com" class="footer-link" title="Contact Developer">
+                    <i class="fa-solid fa-envelope"></i>
+                </a>
+                <a href="#" class="footer-link" title="Privacy Policy" onclick="alert('Privacy Policy: We do not store your location data permanently.')">
+                    <i class="fa-solid fa-file-contract"></i>
+                </a>
+            </div>
+            <p class="footer-copy">&copy; 2025 SAFEROUTE AI | Designed for Safer Roads</p>
+        </div>
+    </footer>
     <div id="helpline-modal" class="modal-overlay">
         <div class="modal-content" style="width:700px;">
             <div class="modal-header"><span class="close-btn" onclick="toggleModal('helpline-modal')" style="position:absolute; top:20px; right:20px; font-size:24px; cursor:pointer;">&times;</span><h1 style="font-family:var(--font-head); font-size:22px; font-weight:800;">EMERGENCY <span>HELPLINE</span></h1></div>
@@ -955,7 +1046,6 @@
             if(!isUser) speakText(text.replace(/\*/g, '')); 
         }
 
- // --- SMART CHATBOT FUNCTION ---
         async function sendChat() {
             const input = document.getElementById('chat-input');
             const txt = input.value.trim();
