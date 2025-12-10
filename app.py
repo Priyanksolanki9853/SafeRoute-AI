@@ -21,7 +21,7 @@ def home():
     # We no longer need to pass the key to the frontend!
     return render_template('Index.html')
 
-# --- UPGRADED: SMART CHATBOT ROUTE (Auto-Fixes 404 Errors) ---
+# --- UPGRADED: HYBRID CHATBOT ROUTE (Never Fails) ---
 @app.route('/api/chat', methods=['POST'])
 def chat_proxy():
     try:
@@ -31,57 +31,71 @@ def chat_proxy():
         # 1. Get Key from Server Environment
         api_key = os.environ.get("GEMINI_API_KEY", "").strip()
         
-        if not api_key:
-            return jsonify({"error": "Server API Key is missing"}), 500
-
-        # 2. Smart Model Switching (Try New -> Fallback to Old)
-        # This fixes the "404 Not Found" error if your key doesn't support the newest model
-        models_to_try = [
-            "gemini-1.5-flash",
-            "gemini-1.5-flash-latest",
-            "gemini-pro"
-        ]
-        
-        last_error = ""
         success = False
-        result_json = {}
+        result_text = ""
 
-        for model in models_to_try:
-            print(f"🤖 Chatbot trying model: {model}...")
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        # 2. Try Real AI (Google Gemini)
+        if api_key:
+            models_to_try = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"]
             
-            payload = {
-                "contents": [{
-                    "parts": [{"text": "You are SafeBot, a road safety AI. Answer in 1-2 sentences. User: " + user_message}]
-                }]
-            }
-            
-            response = requests.post(url, json=payload)
-            
-            if response.status_code == 200:
-                result_json = response.json()
-                success = True
-                break # It worked! Stop trying other models.
+            for model in models_to_try:
+                print(f"🤖 Chatbot attempting: {model}...")
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+                
+                payload = {
+                    "contents": [{
+                        "parts": [{"text": "You are SafeBot, a road safety AI. Answer in 1-2 sentences. User: " + user_message}]
+                    }]
+                }
+                
+                try:
+                    response = requests.post(url, json=payload, timeout=5) # 5s timeout
+                    if response.status_code == 200:
+                        # Extract the text specifically
+                        ai_data = response.json()
+                        if "candidates" in ai_data:
+                            result_text = ai_data["candidates"][0]["content"]["parts"][0]["text"]
+                            success = True
+                            break 
+                except:
+                    continue
+
+        # 3. FALLBACK: Internal Logic (If AI Fails, use this so it never crashes)
+        if not success:
+            print("⚠️ AI Unreachable. Switching to Internal Safety Logic.")
+            msg = user_message.lower()
+            if "hello" in msg or "hi" in msg:
+                result_text = "Hello! I am SafeBot. I can help you find safe routes and analyze road risks."
+            elif "route" in msg:
+                result_text = "Use the inputs on the left to select a Start and Destination, then click 'Analyze Route'."
+            elif "risk" in msg or "score" in msg or "safe" in msg:
+                result_text = "I calculate safety scores based on road curvature, lighting, and accident history. A score above 80 is safe."
+            elif "aqi" in msg or "pollution" in msg:
+                result_text = "Click the 'Check Live AQI' button on the map to see real-time pollution levels."
+            elif "help" in msg or "emergency" in msg:
+                result_text = "For emergencies, use the SOS button in the navbar or call 112 immediately."
             else:
-                print(f"⚠️ {model} failed: {response.status_code}")
-                last_error = response.text
+                result_text = "I am currently in Offline Safety Mode. I can assist with Routes, Risks, and Emergency contacts."
 
-        if success:
-            return jsonify(result_json)
-        else:
-            # If all AI models fail, return a safe fallback message
-            print("❌ All AI models failed.")
-            return jsonify({
-                "candidates": [{
-                    "content": {
-                        "parts": [{"text": "I am currently offline due to a connection issue, but I can still help you route! Please use the controls on the left."}]
-                    }
-                }]
-            })
+        # 4. Return in the exact format Google uses (so Frontend doesn't break)
+        return jsonify({
+            "candidates": [{
+                "content": {
+                    "parts": [{"text": result_text}]
+                }
+            }]
+        })
 
     except Exception as e:
-        print(f"Chat Error: {e}")
-        return jsonify({"error": str(e)}), 500
+        print(f"Chat Critical Error: {e}")
+        # Even if Python crashes, return a polite JSON response
+        return jsonify({
+            "candidates": [{
+                "content": {
+                    "parts": [{"text": "System is rebooting. Please try again in 10 seconds."}]
+                }
+            }]
+        })
 # ----------------------------------------------------------
 
 @app.route('/api/get-route', methods=['POST'])
