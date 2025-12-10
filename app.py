@@ -35,7 +35,7 @@ def chat_proxy():
 
         # 2. Try Real AI (Google Gemini)
         if api_key:
-            models_to_try = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"]
+            models_to_try = ["gemini-2.5-flash-lite", "gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro",]
             
             for model in models_to_try:
                 print(f"🤖 Chatbot attempting: {model}...")
