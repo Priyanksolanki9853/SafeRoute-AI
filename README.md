@@ -1,3 +1,5 @@
+<img width="1893" height="1066" alt="image" src="https://github.com/user-attachments/assets/b7ae875a-85cf-46be-a5d7-76e9722f4af7" />
+
 # 🛡️ SafeRoute AI | AI-Powered Accident Prevention System
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
@@ -66,7 +68,11 @@ Running complex AI and Graph computations on a free cloud tier (512MB RAM) requi
 
 ## 📸 Screenshots
 
-*(Add screenshots of your Dashboard, Route Analysis, and Chatbot here)*
+<img width="1907" height="1066" alt="image" src="https://github.com/user-attachments/assets/4f468e19-64ba-4cc9-817b-405213a8af06" />
+<img width="1919" height="1069" alt="image" src="https://github.com/user-attachments/assets/c4419099-d5e4-44b1-a189-42d98a146e28" />
+<img width="1907" height="1061" alt="image" src="https://github.com/user-attachments/assets/ee7f0666-da56-4676-9cc4-35b858569dbf" />
+<img width="1893" height="1066" alt="image" src="https://github.com/user-attachments/assets/358d5e84-49a9-4370-a8a6-83a7f530b896" />
+
 
 ---
 
@@ -101,7 +107,7 @@ If you want to run this project on your own machine for full performance (unlimi
 
 ## 🤝 Contact & Privacy
 
-* **Developer:** [Your Name]
+* **Developer:** [Priyank Solanki]
 * **Contact:** [priyanksolanki9853@gmail.com](mailto:priyanksolanki9853@gmail.com)
 * **Privacy Policy:** This application processes location data in real-time for routing purposes only. No user location history is stored on our servers.
 
