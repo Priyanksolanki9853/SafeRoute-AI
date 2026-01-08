@@ -11,3 +11,5 @@ geopandas
 rtree
 numpy
 opencv-python-headless
+requests
+geopy
