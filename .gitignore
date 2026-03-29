@@ -1,6 +1,16 @@
-.env
-cache/
+# Python environment
+venv/
 __pycache__/
-*.json
-start.bat
+*.pyc
+
+# Sensistive Info
 .env
+
+# Project Specific Data
+cache/
+users.db
+instance/
+
+# OS specific
+.DS_Store
+Thumbs.db

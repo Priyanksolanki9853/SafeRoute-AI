@@ -13,6 +13,86 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+
+        /* --- ENTRY GATEKEEPER STYLES --- */
+#gatekeeper-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #0F172A; /* Match your dark theme */
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(15px);
+}
+
+.gatekeeper-card {
+    background: rgba(30, 41, 59, 0.9);
+    padding: 50px;
+    border-radius: 24px;
+    border: 1px solid var(--tss-red);
+    text-align: center;
+    box-shadow: 0 0 50px rgba(225, 27, 35, 0.2);
+    max-width: 450px;
+    width: 90%;
+}
+
+.gatekeeper-card h1 {
+    font-family: var(--font-head);
+    color: white;
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.gatekeeper-card p {
+    color: var(--text-sub);
+    font-size: 14px;
+    margin-bottom: 30px;
+}
+
+.gate-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    border: 1px solid var(--border-col);
+    font-family: var(--font-head);
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.3s;
+    text-transform: uppercase;
+    font-size: 13px;
+}
+
+.gate-btn.primary {
+    background: var(--tss-red);
+    color: white;
+    border: none;
+}
+
+.gate-btn.secondary {
+    background: transparent;
+    color: white;
+    border: 1px solid var(--text-sub);
+}
+
+.gate-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Login Form Hidden by Default */
+#login-form { display: none; margin-top: 20px; text-align: left; }
+.gate-input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    background: #1E293B;
+    border: 1px solid var(--border-col);
+    border-radius: 8px;
+    color: white;
+}
         :root {
             /* Light Theme */
             --bg-color: #F0F2F5;
@@ -417,6 +497,17 @@
         }
         .ai-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(225, 27, 35, 0.5); }
 
+
+        /* Animation for the car marker */
+.car-warning {
+    filter: drop-shadow(0 0 8px #E11B23) brightness(1.2);
+    animation: pulse-red 0.5s infinite alternate;
+}
+
+@keyframes pulse-red {
+    from { transform: scale(1); }
+    to { transform: scale(1.2); }
+}
         /* FEATURES & FOOTER */
         .features-section { padding: 80px 5%; background: var(--bg-color); text-align: center; }
         .section-head { 
@@ -591,6 +682,29 @@
     </style>
 </head>
 <body>
+
+
+    <div id="gatekeeper-overlay">
+    <div class="gatekeeper-card">
+        <i class="fa-solid fa-shield-halved" style="font-size: 50px; color: var(--tss-red); margin-bottom: 20px;"></i>
+        <h1>SYSTEM ACCESS</h1>
+        <p>Please authenticate or continue as a guest to access SafeRoute AI protocols.</p>
+        
+        <div id="gate-options">
+            <button class="gate-btn primary" onclick="showLogin()">Secure Login</button>
+            <button class="gate-btn secondary" onclick="enterAsGuest()">Guest Access</button>
+        </div>
+
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-sub);">USERNAME</label>
+            <input type="text" id="gate-user" class="gate-input" required placeholder="Enter username...">
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-sub);">PASSWORD</label>
+            <input type="password" class="gate-input" required placeholder="••••••••">
+            <button type="submit" class="gate-btn primary" style="margin-top: 20px;">Authorize</button>
+            <button type="button" class="gate-btn secondary" onclick="hideLogin()">Back</button>
+        </form>
+    </div>
+</div>
 
     <nav class="navbar">
         <div class="logo">
@@ -941,6 +1055,105 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // --- GATEKEEPER LOGIC ---
+
+// Check if user is already "in" on page load
+window.addEventListener('DOMContentLoaded', () => {
+    if (sessionStorage.getItem('access_granted') === 'true') {
+        document.getElementById('gatekeeper-overlay').style.display = 'none';
+        updateUserUI();
+    }
+});
+
+function showLogin() {
+    document.getElementById('gate-options').style.display = 'none';
+    document.getElementById('login-form').style.display = 'block';
+}
+
+function hideLogin() {
+    document.getElementById('gate-options').style.display = 'block';
+    document.getElementById('login-form').style.display = 'none';
+}
+
+
+
+async function enterAsGuest() {
+    try {
+        await fetch('/api/guest', { method: 'POST' }); // Tell Flask we are a guest
+        sessionStorage.setItem('access_granted', 'true');
+        sessionStorage.setItem('user_name', 'Guest User');
+        sessionStorage.setItem('is_guest', 'true');
+        grantAccess();
+    } catch (e) {
+        alert("Connection to server failed.");
+    }
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const user = document.getElementById('gate-user').value;
+    const pass = document.querySelector('#login-form input[type="password"]').value;
+
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user, password: pass })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            sessionStorage.setItem('access_granted', 'true');
+            sessionStorage.setItem('user_name', data.user);
+            sessionStorage.setItem('is_guest', 'false');
+            grantAccess();
+        } else {
+            alert("System Error: Unauthorized Credentials.");
+        }
+    } catch (error) {
+        alert("Server connection failed.");
+    }
+}
+
+function grantAccess() {
+    const overlay = document.getElementById('gatekeeper-overlay');
+    overlay.style.transition = 'opacity 0.5s ease';
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        updateUserUI();
+        speakText("Welcome to Safe Route AI. Access Granted.");
+    }, 500);
+}
+
+function updateUserUI() {
+    const user = sessionStorage.getItem('user_name');
+    const isGuest = sessionStorage.getItem('is_guest') === 'true';
+    
+    // Optional: Add user name to the navbar
+    const navLinks = document.querySelector('.nav-links');
+    const userBadge = document.createElement('div');
+    userBadge.className = 'nav-link';
+    userBadge.style.color = isGuest ? 'var(--text-sub)' : 'var(--tss-red)';
+    userBadge.innerHTML = `<i class="fa-solid fa-user"></i> ${user}`;
+    navLinks.prepend(userBadge);
+    
+    // Example: Disable 'Save Home' for guests
+    if(isGuest) {
+        document.querySelectorAll('.loc-chip').forEach(chip => {
+            if(chip.innerText.includes("Save")) {
+                chip.style.opacity = '0.5';
+                chip.style.cursor = 'not-allowed';
+                chip.onclick = () => alert("Please Login to save locations!");
+            }
+        });
+    }
+}
+
+
+
+
         var map = L.map('map').setView([23.20, 77.08], 13);
         var tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap, © CARTO' }).addTo(map);
         var routeLayer = L.layerGroup().addTo(map);
@@ -1120,18 +1333,50 @@
             }
         }
 
-        function startSimulation() {
-            if(routeCoordinates.length === 0) { alert("Generate route first!"); return; }
-            if(carMarker) map.removeLayer(carMarker);
-            var carIcon = L.icon({ iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Top_view_of_a_car.svg/1200px-Top_view_of_a_car.svg.png', iconSize: [30, 60], iconAnchor: [15, 30] });
-            carMarker = L.marker(routeCoordinates[0], {icon: carIcon}).addTo(map);
-            let i = 0;
-            function move() {
-                if(i >= routeCoordinates.length) { speakText("Destination reached."); return; }
-                carMarker.setLatLng(routeCoordinates[i]); map.panTo(routeCoordinates[i]); i++; setTimeout(move, 50);
-            }
-            speakText("Starting simulation."); move();
+function startSimulation() {
+    if (routeCoordinates.length === 0) { 
+        alert("📊 Generate a route protocol first!"); 
+        return; 
+    }
+    
+    // 1. Clear existing marker
+    if (carMarker) map.removeLayer(carMarker);
+
+    // 2. Use a reliable Car Icon (SVG format is best for Leaflet)
+    var carIcon = L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/744/744465.png', // Reliable Car Top View
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+    });
+
+    carMarker = L.marker(routeCoordinates[0], { icon: carIcon }).addTo(map);
+    
+    let i = 0;
+    speakText("Simulation sequence initiated. Monitoring road vectors.");
+
+    function move() {
+        if (i >= routeCoordinates.length) {
+            speakText("Destination reached. System standby.");
+            // Add a glow effect when finished
+            carMarker.getElement().style.filter = "drop-shadow(0 0 10px #20BD5F)";
+            return;
         }
+
+        // Update Position
+        carMarker.setLatLng(routeCoordinates[i]);
+        map.panTo(routeCoordinates[i]);
+
+        // --- NEW: DYNAMIC RISK DETECTION ---
+        // Find the segment color at this position to simulate AI awareness
+        // (Optional: You can link this to your segment data for real warnings)
+        
+        i++;
+        // Speed control: adjust the 50 to make it faster or slower
+        setTimeout(move, 60); 
+    }
+    
+    move();
+}
 
         function locateUser() {
             if (navigator.geolocation) {
@@ -1227,7 +1472,12 @@
             var end = document.getElementById('end').value;
             if(!start || !end) { alert("Enter coordinates or search for a location"); return; }
             
-            document.getElementById('btn').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ANALYZING...';
+            document.getElementById('status').innerText = "📡 Connecting to OSM Servers...";
+// After 3 seconds if still loading
+setTimeout(() => { 
+    if(document.getElementById('btn').innerText.includes("ANALYZING")) 
+        document.getElementById('status').innerText = "🗺️ Processing Road Vectors (this can take 10-20s)..."; 
+}, 3000);
             document.getElementById('radar-overlay').style.display = 'block';
 
             routeLayer.clearLayers(); markerLayer.clearLayers();
