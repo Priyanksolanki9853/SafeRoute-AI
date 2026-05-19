@@ -1306,7 +1306,7 @@ function updateUserUI() {
             // 2. Call YOUR Python Backend (Proxy)
             // This hides the API key from the browser and fixes connection errors
             try {
-                const response = await fetch('http://localhost:5000/api/chat', {
+                const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: txt })
@@ -1485,7 +1485,7 @@ setTimeout(() => {
                 let startLat = start.split(',')[0].trim();
                 let startLon = start.split(',')[1].trim();
                 
-                var res = await fetch('http://localhost:5000/api/get-route', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ start: start, end: end }) });
+                var res = await fetch('/api/get-route', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ start: start, end: end }) });
                 var data = await res.json();
                 
                 if(data.error) { 
