@@ -32,7 +32,7 @@ async function analyzeRoute() {
 
     try {
         // CALL BACKEND
-        const response = await fetch('http://127.0.0.1:5000/api/get-route', {
+        const response = await fetch('/api/get-route', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ start: startInput.value, end: endInput.value })
